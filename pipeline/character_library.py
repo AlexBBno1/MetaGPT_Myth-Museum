@@ -218,7 +218,35 @@ CHARACTER_LIBRARY = {
         typical_setting="Roman Senate, battlefield, triumph parade",
     ),
     
-    # Scientists
+    # Scientists & Inventors
+    "edison": CharacterProfile(
+        name="Thomas Alva Edison",
+        aliases=["edison", "thomas edison", "thomas alva edison"],
+        appearance="shrewd inventor and businessman in his 40s-60s, slightly stocky build",
+        hair="thinning gray hair, often disheveled from work",
+        facial_features="sharp intelligent eyes, prominent brow, determined jaw",
+        clothing="three-piece dark suit, sometimes work apron in laboratory",
+        accessories="light bulb, phonograph, or holding electrical components",
+        expression="focused calculating",
+        pose="examining invention, or directing workers, manager stance",
+        era="Gilded Age America, late 19th century",
+        typical_setting="Menlo Park laboratory with electrical equipment, light bulbs, and assistants",
+    ),
+    
+    "tesla": CharacterProfile(
+        name="Nikola Tesla",
+        aliases=["tesla", "nikola tesla"],
+        appearance="tall thin visionary inventor in his 40s-50s, elegant European appearance",
+        hair="dark slicked-back hair, meticulously groomed",
+        facial_features="intense hypnotic eyes, high cheekbones, thin mustache",
+        clothing="formal Victorian suit, high collar, elegant attire",
+        accessories="electrical coils, lightning effects, blueprints",
+        expression="visionary intense",
+        pose="standing amidst electrical discharges, dramatic pose",
+        era="Gilded Age, late 19th-early 20th century",
+        typical_setting="laboratory with Tesla coils, electrical arcs, dark dramatic lighting",
+    ),
+    
     "einstein": CharacterProfile(
         name="Albert Einstein",
         aliases=["einstein", "albert einstein"],

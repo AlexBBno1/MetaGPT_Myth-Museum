@@ -404,6 +404,24 @@ STYLE_TEMPLATES = {
         lighting="dramatic three-point lighting, lens flares, volumetric fog",
         texture="film grain, shallow depth of field, anamorphic bokeh",
     ),
+    "vintage_sepia": StyleTemplate(
+        style_id="vintage_sepia",
+        name="Vintage Sepia",
+        description="Old photograph style, 19th century industrial revolution atmosphere",
+        style_prefix="Vintage sepia-toned photograph, 19th century daguerreotype aesthetic",
+        color_palette="warm sepia, amber browns, faded yellows, aged paper tones",
+        lighting="soft gas lamp glow, warm incandescent bulb light, coal oil lamp ambiance",
+        texture="old photo grain, faded edges, slight scratches, aged patina, vignette corners",
+    ),
+    "steampunk": StyleTemplate(
+        style_id="steampunk",
+        name="Steampunk",
+        description="Victorian sci-fi, mechanical gears and brass pipes",
+        style_prefix="Steampunk illustration, Victorian era science fiction aesthetic",
+        color_palette="brass gold, copper bronze, deep burgundy, industrial grays",
+        lighting="dramatic gas lamp lighting, steam effects, amber glow",
+        texture="polished metal, riveted surfaces, leather and brass details",
+    ),
 }
 
 
@@ -459,7 +477,8 @@ def detect_arc_type(topic: str, series_name: str = "") -> str:
     
     # Historical figure keywords (names of famous people)
     figure_keywords = ["da vinci", "leonardo", "beethoven", "mozart", "napoleon", 
-                       "cleopatra", "caesar", "einstein", "newton", "darwin"]
+                       "cleopatra", "caesar", "einstein", "newton", "darwin",
+                       "edison", "tesla", "van gogh", "picasso", "michelangelo"]
     if any(kw in topic_lower for kw in figure_keywords):
         return "historical_figure"
     
