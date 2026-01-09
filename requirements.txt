@@ -1,0 +1,43 @@
+# Myth Museum - Requirements
+# Install with: pip install -r requirements.txt
+
+# Core Dependencies
+feedparser>=6.0.10
+httpx>=0.25.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+rapidfuzz>=3.5.0
+tenacity>=8.2.0
+rich>=13.0.0
+typer>=0.9.0
+pydantic>=2.0.0
+pyyaml>=6.0
+openai>=1.0.0
+google-generativeai>=0.8.0
+
+# API (FastAPI)
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# TTS (Text-to-Speech)
+edge-tts>=6.1.0
+pydub>=0.25.0
+
+# Vertex AI (Imagen, Veo)
+google-cloud-aiplatform>=1.38.0
+vertexai>=1.38.0
+
+# Jupyter Notebook
+jupyter>=1.0.0
+ipywidgets>=8.0.0
+notebook>=7.0.0
+
+# Image Processing
+Pillow>=10.0.0
+matplotlib>=3.7.0
+
+# Development (optional)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+respx>=0.20.0

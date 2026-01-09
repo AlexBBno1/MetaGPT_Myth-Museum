@@ -11,13 +11,13 @@ echo.
 cd /d "%~dp0"
 
 echo [1/2] 檢查環境...
-where jupyter >nul 2>&1
+python -c "import jupyter" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo     ❌ Jupyter 未安裝！請執行: pip install jupyter ipywidgets
-    pause
-    exit /b 1
+    echo     ❌ Jupyter 未安裝！
+    echo     正在自動安裝...
+    pip install jupyter ipywidgets matplotlib pillow -q
 )
-echo     ✓ Jupyter 已安裝
+echo     ✓ Jupyter 已就緒
 
 echo [2/2] 啟動 Jupyter Notebook...
 echo.
@@ -27,4 +27,4 @@ echo   按 Ctrl+C 關閉伺服器
 echo ═══════════════════════════════════════════════════════════
 echo.
 
-jupyter notebook notebooks/myth_generator.ipynb
+python -m notebook notebooks/myth_generator.ipynb
