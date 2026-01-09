@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "myth-museum"
+version = "0.1.0"
+description = "Automated fact-checking content pipeline for myth-busting video production"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Myth Museum Team"}
+]
+keywords = ["fact-checking", "content-pipeline", "video-production", "metagpt"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "feedparser>=6.0.10",
+    "httpx>=0.25.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "rapidfuzz>=3.5.0",
+    "tenacity>=8.2.0",
+    "rich>=13.0.0",
+    "typer>=0.9.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+    "openai>=1.0.0",
+    "google-generativeai>=0.8.0",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+]
+tts = [
+    "edge-tts>=6.1.0",
+    "pydub>=0.25.0",
+]
+veo = [
+    "google-cloud-aiplatform>=1.38.0",
+    "vertexai>=1.38.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "respx>=0.20.0",
+]
+all = [
+    "myth-museum[api,tts,veo,dev]",
+]
+
+[project.scripts]
+myth-museum = "pipeline.run_daily:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core*", "ingest*", "pipeline*", "metagpt_integration*", "app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]

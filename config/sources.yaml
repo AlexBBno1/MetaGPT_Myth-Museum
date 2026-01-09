@@ -1,0 +1,91 @@
+# Myth Museum - Source Configuration
+# 
+# This file configures data sources for the fact-checking pipeline.
+# Modify this file to add/remove RSS feeds, Wikipedia topics, etc.
+
+# LLM Configuration
+# Environment variables take precedence:
+#   MYTH_LLM_BASE_URL, MYTH_LLM_API_KEY, MYTH_LLM_MODEL
+llm:
+  base_url: "https://api.openai.com/v1"
+  api_key: ""  # Set via MYTH_LLM_API_KEY env var
+  model: "gpt-4o-mini"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 60
+
+# Database configuration
+database:
+  path: "data/myth_museum.sqlite"
+
+# Output configuration
+output:
+  path: "outputs/packets"
+
+# Wikipedia topic keywords for research
+wiki_topics:
+  - "health myths"
+  - "medical misconceptions"
+  - "historical myths"
+  - "science myths"
+  - "urban legends"
+  - "common misconceptions"
+  - "pseudoscience"
+
+# Data sources configuration
+# Types: rss, wikipedia, factcheck, academic, official, news
+sources:
+  # Fact-checking RSS feeds (placeholder URLs - replace with actual feeds)
+  - name: "PolitiFact"
+    type: "factcheck"
+    enabled: true
+    config:
+      feed_url: "https://www.politifact.com/rss/all/"
+  
+  - name: "Snopes"
+    type: "factcheck"
+    enabled: true
+    config:
+      feed_url: "https://www.snopes.com/feed/"
+  
+  - name: "Full Fact"
+    type: "factcheck"
+    enabled: true
+    config:
+      feed_url: "https://fullfact.org/feed/"
+  
+  # Official health organization feeds
+  - name: "WHO News"
+    type: "official"
+    enabled: true
+    config:
+      feed_url: "https://www.who.int/feeds/entity/news/en/rss.xml"
+  
+  - name: "CDC Newsroom"
+    type: "official"
+    enabled: false  # Enable if feed URL is valid
+    config:
+      feed_url: "https://tools.cdc.gov/podcasts/feed.asp?feedid=183"
+  
+  # Science news (for evidence gathering)
+  - name: "Science Daily"
+    type: "news"
+    enabled: true
+    config:
+      feed_url: "https://www.sciencedaily.com/rss/all.xml"
+  
+  - name: "Nature News"
+    type: "academic"
+    enabled: true
+    config:
+      feed_url: "https://www.nature.com/nature.rss"
+  
+  # Wikipedia (special type - uses API, not RSS)
+  - name: "Wikipedia Health"
+    type: "wikipedia"
+    enabled: true
+    config:
+      topics:
+        - "List of common misconceptions"
+        - "Medical myths"
+        - "Health effects of specific foods"

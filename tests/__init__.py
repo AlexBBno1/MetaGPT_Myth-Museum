@@ -1,0 +1,3 @@
+"""
+Myth Museum - Tests Module
+"""

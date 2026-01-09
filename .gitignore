@@ -1,0 +1,112 @@
+# ==================================
+# Myth Museum .gitignore
+# ==================================
+
+# ---------------------------------
+# Generated Output Files (Products)
+# ---------------------------------
+outputs/
+*.mp4
+*.mp3
+*.wav
+*.jpg
+!pipeline/image_providers/*.jpg
+
+# ---------------------------------
+# Python
+# ---------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ---------------------------------
+# Virtual Environments
+# ---------------------------------
+venv/
+ENV/
+env/
+.venv/
+
+# ---------------------------------
+# IDE / Editor
+# ---------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# ---------------------------------
+# Jupyter Notebook
+# ---------------------------------
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# ---------------------------------
+# Credentials & Secrets
+# ---------------------------------
+*.json
+!config/series_registry.json
+!pyproject.toml
+.env
+.env.local
+*.pem
+*.key
+secrets/
+
+# ---------------------------------
+# Database
+# ---------------------------------
+data/
+*.sqlite
+*.db
+
+# ---------------------------------
+# Logs
+# ---------------------------------
+logs/
+*.log
+
+# ---------------------------------
+# OS Files
+# ---------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---------------------------------
+# Test Coverage
+# ---------------------------------
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.mypy_cache/
+
+# ---------------------------------
+# Temporary Files
+# ---------------------------------
+tmp/
+temp/
+*.tmp
+*.bak
