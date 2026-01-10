@@ -21,6 +21,8 @@ echo Open your browser to: http://localhost:8501
 echo Press Ctrl+C to stop the server
 echo.
 
-streamlit run streamlit_app.py --server.headless true
+REM Use python -m streamlit instead of direct streamlit command
+REM This works even if Scripts folder is not in PATH
+python -m streamlit run streamlit_app.py --server.headless false
 
 pause
