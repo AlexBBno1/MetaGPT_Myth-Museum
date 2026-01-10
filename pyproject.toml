@@ -57,8 +57,11 @@ dev = [
     "pytest-cov>=4.1.0",
     "respx>=0.20.0",
 ]
+ui = [
+    "streamlit>=1.30.0",
+]
 all = [
-    "myth-museum[api,tts,veo,dev]",
+    "myth-museum[api,tts,veo,dev,ui]",
 ]
 
 [project.scripts]

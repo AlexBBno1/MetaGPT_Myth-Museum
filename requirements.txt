@@ -27,10 +27,8 @@ pydub>=0.25.0
 google-cloud-aiplatform>=1.38.0
 vertexai>=1.38.0
 
-# Jupyter Notebook
-jupyter>=1.0.0
-ipywidgets>=8.0.0
-notebook>=7.0.0
+# Streamlit Web UI
+streamlit>=1.30.0
 
 # Image Processing
 Pillow>=10.0.0
