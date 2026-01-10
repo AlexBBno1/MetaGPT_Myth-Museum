@@ -46,6 +46,35 @@ app = typer.Typer(
 
 
 # ============================================================================
+# Keyword Highlighting for Subtitles
+# ============================================================================
+
+# Words that should be highlighted in orange for emphasis
+EMPHASIS_KEYWORDS = {
+    # Negation (high impact)
+    "not", "never", "no", "don't", "didn't", "doesn't", "won't", "can't",
+    "wasn't", "weren't", "isn't", "aren't", "couldn't", "wouldn't", "nobody",
+    
+    # Contrast/revelation words
+    "but", "however", "actually", "really", "wrong", "false", "true",
+    "myth", "fact", "lie", "truth", "dead", "secret", "hidden",
+    
+    # Superlatives and absolutes
+    "most", "least", "best", "worst", "only", "first", "last",
+    "always", "everything", "nothing", "everyone", "all", "none",
+    
+    # Large numbers (for emphasis)
+    "million", "billion", "thousand", "hundred", "zero",
+    
+    # Time emphasis
+    "years", "centuries", "forever", "still",
+    
+    # Action words
+    "stop", "wait", "remember", "forget", "imagine",
+}
+
+
+# ============================================================================
 # Data Classes
 # ============================================================================
 
@@ -76,6 +105,211 @@ class GenerationConfig:
     
     # Subtitle style
     subtitle_style: str = "punch"  # "normal" or "punch" (with keyword animation)
+
+
+# ============================================================================
+# Pre-Flight Check - Validates dependencies before generation
+# ============================================================================
+
+class PreFlightCheck:
+    """
+    Validates all dependencies and configurations before video generation starts.
+    
+    Prevents wasted time by catching issues early:
+    - FFmpeg not installed
+    - Missing API credentials
+    - Output directory not writable
+    """
+    
+    def __init__(self):
+        self.checks_passed: list[str] = []
+        self.checks_failed: list[str] = []
+        self.checks_warned: list[str] = []
+    
+    def run_all_checks(self, verbose: bool = True) -> bool:
+        """
+        Run all pre-flight checks.
+        
+        Args:
+            verbose: Print results to console
+            
+        Returns:
+            True if all critical checks pass, False otherwise
+        """
+        self.checks_passed = []
+        self.checks_failed = []
+        self.checks_warned = []
+        
+        # Critical checks (will abort if failed)
+        self._check_ffmpeg()
+        self._check_google_credentials()
+        self._check_output_dir()
+        
+        # Optional checks (warnings only)
+        self._check_openai_key()
+        self._check_pexels_key()
+        
+        if verbose:
+            self._print_results()
+        
+        return len(self.checks_failed) == 0
+    
+    def _check_ffmpeg(self) -> None:
+        """Verify FFmpeg is installed and accessible."""
+        try:
+            result = subprocess.run(
+                ["ffmpeg", "-version"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                # Extract version from output
+                version_line = result.stdout.split('\n')[0]
+                self.checks_passed.append(f"FFmpeg: {version_line[:50]}")
+            else:
+                self.checks_failed.append(
+                    "FFmpeg not working properly. Install from: https://ffmpeg.org/download.html"
+                )
+        except FileNotFoundError:
+            self.checks_failed.append(
+                "FFmpeg not found. Install from: https://ffmpeg.org/download.html "
+                "or run: winget install -e --id Gyan.FFmpeg"
+            )
+    
+    def _check_google_credentials(self) -> None:
+        """Verify Google Cloud credentials for TTS and Imagen."""
+        import os
+        
+        # Check for service account JSON
+        creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+        
+        if creds_path and Path(creds_path).exists():
+            self.checks_passed.append(f"Google credentials: {Path(creds_path).name}")
+            return
+        
+        # Check for default credentials locations
+        default_paths = [
+            Path.home() / ".config" / "gcloud" / "application_default_credentials.json",
+            Path("service-account.json"),
+            Path("google-credentials.json"),
+        ]
+        
+        for p in default_paths:
+            if p.exists():
+                self.checks_passed.append(f"Google credentials: {p.name}")
+                return
+        
+        # Check for service account JSON files with pattern *-*.json (like project-id-xxxx.json)
+        json_files = list(Path(".").glob("*-*.json"))
+        for jf in json_files:
+            try:
+                import json as json_lib
+                with open(jf, "r") as f:
+                    data = json_lib.load(f)
+                    if data.get("type") == "service_account":
+                        self.checks_passed.append(f"Google credentials: {jf.name} (service account)")
+                        return
+            except:
+                continue
+        
+        # Try to use google.auth.default()
+        try:
+            from google.auth import default
+            credentials, project = default()
+            if project:
+                self.checks_passed.append(f"Google credentials: Default ({project})")
+                return
+            elif credentials:
+                self.checks_warned.append(
+                    "Google credentials found but no project set. "
+                    "Set GOOGLE_CLOUD_PROJECT or VERTEX_PROJECT_ID environment variable."
+                )
+                return
+        except Exception:
+            pass
+        
+        # If we get here, no credentials found
+        self.checks_failed.append(
+            "Google Cloud credentials not found. Required for TTS and Imagen. "
+            "Set GOOGLE_APPLICATION_CREDENTIALS or run: gcloud auth application-default login"
+        )
+    
+    def _check_openai_key(self) -> None:
+        """Verify OpenAI API key for DALL-E fallback."""
+        import os
+        
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+        
+        if api_key and api_key.startswith("sk-"):
+            self.checks_passed.append("OpenAI API key: Configured (DALL-E fallback available)")
+        else:
+            self.checks_warned.append(
+                "OpenAI API key not set. DALL-E fallback will not be available. "
+                "Set OPENAI_API_KEY environment variable if needed."
+            )
+    
+    def _check_pexels_key(self) -> None:
+        """Verify Pexels API key for stock photo fallback."""
+        import os
+        
+        api_key = os.environ.get("PEXELS_API_KEY", "")
+        
+        if api_key:
+            self.checks_passed.append("Pexels API key: Configured (stock photo fallback available)")
+        else:
+            self.checks_warned.append(
+                "Pexels API key not set. Stock photo fallback will use Picsum (random images). "
+                "Get a free key at: https://www.pexels.com/api/"
+            )
+    
+    def _check_output_dir(self) -> None:
+        """Verify output directory is writable."""
+        output_dir = Path("outputs/shorts")
+        
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Test write permission
+            test_file = output_dir / ".write_test"
+            test_file.write_text("test")
+            test_file.unlink()
+            
+            self.checks_passed.append(f"Output directory: {output_dir} (writable)")
+        except Exception as e:
+            self.checks_failed.append(
+                f"Output directory not writable: {output_dir}. Error: {e}"
+            )
+    
+    def _print_results(self) -> None:
+        """Print check results to console."""
+        console.print("\n[bold cyan]=== Pre-Flight Checks ===[/bold cyan]\n")
+        
+        for check in self.checks_passed:
+            console.print(f"  [green][OK][/green] {check}")
+        
+        for warning in self.checks_warned:
+            console.print(f"  [yellow][WARN][/yellow] {warning}")
+        
+        for error in self.checks_failed:
+            console.print(f"  [red][FAIL][/red] {error}")
+        
+        console.print("")
+        
+        if self.checks_failed:
+            console.print(f"[bold red]Pre-flight checks FAILED ({len(self.checks_failed)} errors)[/bold red]")
+            console.print("[yellow]Please fix the issues above before generating videos.[/yellow]")
+        else:
+            total = len(self.checks_passed) + len(self.checks_warned)
+            console.print(f"[bold green]Pre-flight checks PASSED ({total} checks)[/bold green]")
+    
+    def get_summary(self) -> dict:
+        """Get check results as dictionary."""
+        return {
+            "passed": self.checks_passed,
+            "warnings": self.checks_warned,
+            "failed": self.checks_failed,
+            "success": len(self.checks_failed) == 0,
+        }
 
 
 # ============================================================================
@@ -201,6 +435,85 @@ class QualityGuard:
         if not lines:
             lines.append("All quality checks passed!")
         return "\n".join(lines)
+    
+    def validate_subtitles(
+        self,
+        script_path: Path,
+        srt_path: Path,
+        min_coverage: float = 0.95,
+    ) -> bool:
+        """
+        Validate subtitles contain all script text (no truncation).
+        
+        This prevents the issue where long sentences get truncated
+        in SRT generation, causing subtitles to be incomplete.
+        
+        Args:
+            script_path: Path to original voiceover.txt
+            srt_path: Path to captions.srt
+            min_coverage: Minimum percentage of script words in subtitles (0.95 = 95%)
+        
+        Returns:
+            True if validation passes, False if subtitles are incomplete
+        """
+        if not script_path.exists():
+            self.errors.append(f"Script file not found: {script_path}")
+            return False
+        
+        if not srt_path.exists():
+            self.errors.append(f"SRT file not found: {srt_path}")
+            return False
+        
+        # Load original script
+        script_text = script_path.read_text(encoding="utf-8").lower()
+        
+        # Load subtitle text (extract text from SRT format)
+        srt_content = srt_path.read_text(encoding="utf-8")
+        # SRT format: index\ntimestamp\ntext\n\n
+        # Extract just the text lines (skip index and timestamp lines)
+        srt_lines = srt_content.strip().split("\n")
+        subtitle_text = ""
+        for i, line in enumerate(srt_lines):
+            # Skip index lines (just numbers) and timestamp lines (contain -->)
+            if line.strip().isdigit() or "-->" in line:
+                continue
+            subtitle_text += line.lower() + " "
+        
+        # Extract words (alphanumeric only)
+        import re
+        script_words = set(re.findall(r'\b[a-z0-9]+\b', script_text))
+        subtitle_words = set(re.findall(r'\b[a-z0-9]+\b', subtitle_text))
+        
+        if not script_words:
+            self.warnings.append("Script has no words to validate")
+            return True
+        
+        # Calculate coverage
+        matched_words = script_words & subtitle_words
+        coverage = len(matched_words) / len(script_words)
+        
+        # Find missing words
+        missing_words = script_words - subtitle_words
+        
+        if coverage < min_coverage:
+            # Find which sentences are likely truncated
+            missing_sample = list(missing_words)[:10]
+            self.errors.append(
+                f"Subtitle coverage too low: {coverage:.1%} < {min_coverage:.0%}. "
+                f"Missing words: {', '.join(missing_sample)}{'...' if len(missing_words) > 10 else ''}"
+            )
+            logger.error(f"QualityGuard: Subtitle validation failed - {len(missing_words)} words missing")
+            return False
+        
+        if missing_words:
+            self.warnings.append(
+                f"Subtitle coverage: {coverage:.1%}. "
+                f"Minor missing words: {', '.join(list(missing_words)[:5])}"
+            )
+        else:
+            logger.info(f"QualityGuard: Subtitle validation passed - 100% coverage")
+        
+        return True
 
 
 @dataclass
@@ -312,6 +625,14 @@ class ShortVideoGenerator:
         result = GenerationResult()
         
         try:
+            # Phase 0: Pre-flight checks
+            console.print(f"\n[bold cyan]Phase 0: Pre-Flight Checks[/bold cyan]")
+            
+            preflight = PreFlightCheck()
+            if not preflight.run_all_checks(verbose=True):
+                result.error = "Pre-flight checks failed. Please fix the issues above."
+                return result
+            
             # Phase 1: Setup output folder
             console.print(f"\n[bold cyan]Phase 1: Setup[/bold cyan]")
             
@@ -432,11 +753,15 @@ class ShortVideoGenerator:
                 else:
                     console.print(f"       [red]FAILED[/red]: {img_result.error[:50] if img_result.error else 'Unknown'}")
             
-            if images_generated == 0:
-                result.error = "No images generated"
+            # Phase 3 Gate: Minimum images required
+            MIN_IMAGES_REQUIRED = 4
+            if images_generated < MIN_IMAGES_REQUIRED:
+                result.error = f"Only {images_generated} images generated, need at least {MIN_IMAGES_REQUIRED}"
+                console.print(f"  [red]GATE FAILED: {result.error}[/red]")
                 return result
             
             console.print(f"  Total: {images_generated}/{num_images}")
+            console.print(f"  [green]GATE PASSED: >= {MIN_IMAGES_REQUIRED} images[/green]")
             
             # Phase 4: TTS generation
             console.print(f"\n[bold cyan]Phase 4: TTS Generation[/bold cyan]")
@@ -456,10 +781,51 @@ class ShortVideoGenerator:
             console.print(f"  Audio: {audio_path}")
             console.print(f"  Duration: {duration:.1f}s")
             
+            # Phase 4 Gate: Valid audio file
+            MIN_DURATION = 10.0  # At least 10 seconds
+            MAX_DURATION = 120.0  # Max 2 minutes for Shorts
+            
+            if not audio_path.exists() or audio_path.stat().st_size < 1000:
+                result.error = "Audio file missing or empty"
+                console.print(f"  [red]GATE FAILED: {result.error}[/red]")
+                return result
+            
+            if duration < MIN_DURATION:
+                result.error = f"Audio too short: {duration:.1f}s < {MIN_DURATION}s minimum"
+                console.print(f"  [red]GATE FAILED: {result.error}[/red]")
+                return result
+            
+            if duration > MAX_DURATION:
+                console.print(f"  [yellow]WARNING: Audio {duration:.1f}s exceeds {MAX_DURATION}s (Shorts limit)[/yellow]")
+            
+            console.print(f"  [green]GATE PASSED: Audio valid ({duration:.1f}s)[/green]")
+            
+            # Phase 4.5: Validate subtitles completeness (fool-proofing)
+            srt_path = output_folder / "captions.srt"
+            script_path = output_folder / "voiceover.txt"
+            
+            if srt_path.exists():
+                subtitle_guard = QualityGuard()
+                subtitle_valid = subtitle_guard.validate_subtitles(script_path, srt_path)
+                
+                if not subtitle_valid:
+                    for error in subtitle_guard.errors:
+                        console.print(f"  [red]SUBTITLE ERROR: {error}[/red]")
+                    result.error = "Subtitle validation failed - text may be truncated"
+                    console.print(f"  [red]GATE FAILED: Subtitle coverage < 95%[/red]")
+                    console.print("[yellow]This usually means long sentences were truncated in SRT generation.[/yellow]")
+                    console.print("[yellow]Check pipeline/tts.py MAX_LINE_LENGTH and MAX_LINES settings.[/yellow]")
+                    return result
+                
+                for warning in subtitle_guard.warnings:
+                    console.print(f"  [yellow]{warning}[/yellow]")
+                
+                console.print(f"  [green]GATE PASSED: Subtitle coverage >= 95%[/green]")
+            
             # Phase 5: Create ASS subtitles with series marker
             console.print(f"\n[bold cyan]Phase 5: Subtitles[/bold cyan]")
             
-            srt_path = output_folder / "captions.srt"
+            # srt_path already defined in Phase 4.5
             ass_path = output_folder / "captions.ass"
             
             self._create_ass_with_series_marker(
@@ -472,6 +838,13 @@ class ShortVideoGenerator:
             style_label = "punch (animated)" if config.subtitle_style == "punch" else "normal"
             console.print(f"  ASS: {ass_path}")
             console.print(f"  Style: {style_label}")
+            
+            # Phase 5 Gate: ASS file created
+            if not ass_path.exists() or ass_path.stat().st_size < 100:
+                result.error = "ASS subtitle file not created or empty"
+                console.print(f"  [red]GATE FAILED: {result.error}[/red]")
+                return result
+            console.print(f"  [green]GATE PASSED: ASS file created[/green]")
             
             # Phase 6: Render video
             console.print(f"\n[bold cyan]Phase 6: Video Render[/bold cyan]")
@@ -500,21 +873,24 @@ class ShortVideoGenerator:
             self._render_final(slideshow_path, audio_path, ass_path, final_path)
             console.print(f"  Final: {final_path}")
             
-            # Quality validation
+            # Phase 7: Final quality validation
             console.print(f"\n[bold cyan]Phase 7: Quality Check[/bold cyan]")
             quality_guard = QualityGuard()
             quality_passed = quality_guard.validate(final_path, duration)
             
-            if quality_passed:
-                console.print(f"  [green]All quality checks passed![/green]")
-            else:
-                for error in quality_guard.errors:
-                    console.print(f"  [red]ERROR: {error}[/red]")
-            
             for warning in quality_guard.warnings:
                 console.print(f"  [yellow]WARNING: {warning}[/yellow]")
             
-            result.success = quality_passed
+            if quality_passed:
+                console.print(f"  [green]GATE PASSED: All quality checks passed![/green]")
+            else:
+                for error in quality_guard.errors:
+                    console.print(f"  [red]ERROR: {error}[/red]")
+                console.print(f"  [red]GATE FAILED: Quality validation failed[/red]")
+                result.error = "Final video quality validation failed"
+                return result
+            
+            result.success = True
             result.final_video = final_path
             
             # Save metadata
@@ -558,6 +934,42 @@ class ShortVideoGenerator:
             return f"{punch_tag}{words[0]}"
         else:
             return f"{punch_tag}{words[0]} {reset_tag}{words[1]}"
+    
+    def _highlight_keywords(self, text: str) -> str:
+        """
+        Highlight emphasis keywords with orange color.
+        
+        Uses ASS override tags to change specific words to orange
+        for visual emphasis (like "not", "wrong", "never", etc.).
+        
+        ASS color format is BGR (Blue-Green-Red), so:
+        - Orange = &H0080FF& (R=255, G=128, B=0)
+        - White = &H00FFFFFF&
+        
+        Args:
+            text: Subtitle text to process
+            
+        Returns:
+            Text with ASS color tags for emphasis keywords
+        """
+        # ASS color codes (BGR format)
+        HIGHLIGHT_COLOR = r"{\c&H0080FF&}"   # Orange
+        RESET_COLOR = r"{\c&HFFFFFF&}"       # White
+        
+        words = text.split(" ")
+        result = []
+        
+        for word in words:
+            # Extract the base word (without punctuation) for matching
+            word_clean = word.lower().rstrip(".,!?;:'\"").lstrip("'\"")
+            
+            if word_clean in EMPHASIS_KEYWORDS:
+                # Wrap the word in color tags
+                result.append(f"{HIGHLIGHT_COLOR}{word}{RESET_COLOR}")
+            else:
+                result.append(word)
+        
+        return " ".join(result)
     
     def _create_ass_with_series_marker(
         self,
@@ -633,12 +1045,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                         # Apply effects based on style
                         fade_in = r"{\fad(80,0)}"  # 80ms fade in
                         
+                        # Step 1: Apply keyword color highlighting (orange for emphasis words)
+                        text_highlighted = self._highlight_keywords(text)
+                        
                         if subtitle_style == "punch":
-                            # Add punch animation to first word
-                            text_with_effects = f"{fade_in}{self._add_punch_to_first_word(text)}"
+                            # Step 2: Add punch animation to first word
+                            text_with_effects = f"{fade_in}{self._add_punch_to_first_word(text_highlighted)}"
                         else:
-                            # Normal style - just fade in
-                            text_with_effects = f"{fade_in}{text}"
+                            # Normal style - just fade in + highlighting
+                            text_with_effects = f"{fade_in}{text_highlighted}"
                         
                         ass_content += f"Dialogue: 0,{start},{end},Default,,0,0,0,,{text_with_effects}\n"
         
@@ -915,6 +1330,34 @@ def list_series() -> None:
     
     for name, count in sorted(series.items()):
         console.print(f"  {name}: {count} episodes")
+
+
+@app.command("preflight")
+def preflight_check() -> None:
+    """
+    Run pre-flight checks to verify all dependencies are ready.
+    
+    Checks:
+    - FFmpeg installation
+    - Google Cloud credentials (TTS, Imagen)
+    - OpenAI API key (DALL-E fallback)
+    - Pexels API key (stock photo fallback)
+    - Output directory permissions
+    
+    Example:
+        python -m pipeline.generate_short preflight
+    """
+    console.print("[bold cyan]Running Pre-Flight Checks...[/bold cyan]")
+    
+    preflight = PreFlightCheck()
+    success = preflight.run_all_checks(verbose=True)
+    
+    if success:
+        console.print("\n[bold green]All systems ready! You can generate videos.[/bold green]")
+        raise typer.Exit(0)
+    else:
+        console.print("\n[bold red]Some checks failed. Please fix the issues above.[/bold red]")
+        raise typer.Exit(1)
 
 
 @app.command("preview")

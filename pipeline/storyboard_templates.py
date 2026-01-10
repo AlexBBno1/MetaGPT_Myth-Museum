@@ -422,6 +422,24 @@ STYLE_TEMPLATES = {
         lighting="dramatic gas lamp lighting, steam effects, amber glow",
         texture="polished metal, riveted surfaces, leather and brass details",
     ),
+    "sci_fi_cinematic": StyleTemplate(
+        style_id="sci_fi_cinematic",
+        name="Sci-Fi Cinematic",
+        description="Interstellar/Star Trek aesthetic, epic space visuals",
+        style_prefix="Sci-fi cinematic movie still, Interstellar visual style, epic space visualization",
+        color_palette="deep space blue, purple nebulae, orange accents, stark white stars",
+        lighting="dramatic rim lighting, lens flares, volumetric god rays, stellar illumination",
+        texture="sharp stars, smooth nebula gradients, motion blur trails, cosmic dust",
+    ),
+    "watercolor_fantasy": StyleTemplate(
+        style_id="watercolor_fantasy",
+        name="Watercolor Fantasy",
+        description="Dreamy watercolor illustration for mythology and fantasy themes",
+        style_prefix="Dreamy watercolor illustration, soft fantasy art style, mythological storybook aesthetic",
+        color_palette="ocean blues, sunset oranges, soft greens, ethereal whites, golden divine light",
+        lighting="soft diffused light, glowing edges, luminous highlights, ethereal radiance",
+        texture="visible brush strokes, wet-on-wet blending, paper grain texture, organic color bleeding",
+    ),
 }
 
 
@@ -470,8 +488,8 @@ def detect_arc_type(topic: str, series_name: str = "") -> str:
     series_lower = series_name.lower() if series_name else ""
     
     # Lost civilization keywords
-    civ_keywords = ["aztec", "maya", "mayan", "egypt", "egyptian", "inca", "sumerian", 
-                    "babylon", "mesopotamia", "civilization", "ancient", "ruins"]
+    civ_keywords = ["aztec", "maya", "mayan", "inca", "sumerian", 
+                    "babylon", "mesopotamia", "civilization", "ruins"]
     if any(kw in topic_lower or kw in series_lower for kw in civ_keywords):
         return "lost_civilization"
     
@@ -481,6 +499,17 @@ def detect_arc_type(topic: str, series_name: str = "") -> str:
                        "edison", "tesla", "van gogh", "picasso", "michelangelo"]
     if any(kw in topic_lower for kw in figure_keywords):
         return "historical_figure"
+    
+    # Egyptian monument keywords - use myth_buster arc for debunking
+    egypt_keywords = ["sphinx", "giza", "pyramid", "egypt", "egyptian", "pharaoh"]
+    if any(kw in topic_lower for kw in egypt_keywords):
+        return "myth_buster"
+    
+    # Space/galaxy keywords - use myth_buster arc for science debunking
+    space_keywords = ["galaxy", "milky way", "space", "universe", "black hole", 
+                      "andromeda", "star", "cosmic", "solar system", "orbit"]
+    if any(kw in topic_lower for kw in space_keywords):
+        return "myth_buster"
     
     # Default to myth buster
     return "myth_buster"

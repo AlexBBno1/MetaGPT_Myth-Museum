@@ -348,8 +348,11 @@ def generate_srt_from_timepoints(
             ms = int((s % 1) * 1000)
             return f'{h:02d}:{m:02d}:{sec:02d},{ms:03d}'
         
-        # Split long sentences into display lines (max 32 chars per line to avoid overflow)
-        MAX_LINE_LENGTH = 32
+        # Split long sentences into display lines for readability
+        # Shorts (9:16 vertical) can fit ~40 chars per line comfortably
+        # Allow up to 5 lines to avoid truncating long sentences
+        MAX_LINE_LENGTH = 40
+        MAX_LINES = 5
         words = sentence.split()
         display_lines = []
         current_line = []
@@ -365,7 +368,7 @@ def generate_srt_from_timepoints(
         if current_line:
             display_lines.append(' '.join(current_line))
         
-        subtitle_text = '\n'.join(display_lines[:3])
+        subtitle_text = '\n'.join(display_lines[:MAX_LINES])
         
         srt_block = f"{i+1}\n{to_srt_time(start_time)} --> {to_srt_time(end_time)}\n{subtitle_text}\n"
         srt_blocks.append(srt_block)

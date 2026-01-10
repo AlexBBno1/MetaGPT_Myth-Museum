@@ -19,13 +19,15 @@ Myth Museum is a Python-based content pipeline that automatically generates "Top
 ### NEW: Automated Video Generation
 
 - 🎬 **One-Click Video Generation**: Generate complete YouTube Shorts from a topic
-- 🎨 **Multiple Visual Styles**: Oil painting cartoon, photorealistic, Pixar 3D, watercolor, cinematic
+- 🎨 **Multiple Visual Styles**: Oil painting cartoon, photorealistic, Pixar 3D, watercolor, cinematic, sci-fi, watercolor fantasy
 - 📖 **Narrative Arc Templates**: Myth Buster, Historical Figure, Lost Civilization
-- 👤 **Character Consistency**: 15+ pre-defined historical figures with consistent visual descriptions
+- 👤 **Character Consistency**: 20+ pre-defined historical figures with consistent visual descriptions
 - 🖼️ **Multi-Provider Image Generation**: Imagen 3, DALL-E 3, Pexels, Picsum with automatic fallback
-- 🔊 **TTS Integration**: Google TTS for automatic voiceover generation
-- 📝 **Automatic Subtitles**: ASS format subtitles with series markers
+- 🔊 **TTS Integration**: Google TTS for automatic voiceover generation with word-level timing
+- 📝 **Rich Subtitles**: ASS format with punch animations and **keyword color highlighting**
 - 🎞️ **Ken Burns Effect**: Smooth zoom/pan animations between images
+- ✅ **Quality Gates**: Pre-flight checks and phase gates ensure consistent video quality
+- 🔒 **Fool-Proofing**: Subtitle completeness validation prevents truncated text
 
 ---
 
@@ -59,6 +61,68 @@ The notebook allows you to:
 4. Generate and preview images
 5. Regenerate individual images
 6. One-click final video generation
+
+---
+
+## Pre-Flight Checks & Quality Gates
+
+Before generating any video, the system automatically validates all dependencies:
+
+```powershell
+# Run pre-flight checks manually
+python -m pipeline.generate_short preflight
+```
+
+### Pre-Flight Checks (Phase 0)
+
+| Check | Type | Description |
+|-------|------|-------------|
+| FFmpeg | **Required** | Video rendering engine |
+| Google Cloud | **Required** | TTS and Imagen API |
+| Output Dir | **Required** | Writable permissions |
+| OpenAI API | Warning | DALL-E fallback |
+| Pexels API | Warning | Stock photo fallback |
+
+### Phase Gates
+
+Each generation phase has a quality gate that must pass:
+
+| Phase | Gate | Failure Action |
+|-------|------|----------------|
+| 0 | Pre-flight checks | Abort with setup instructions |
+| 3 | >= 4 images generated | Abort |
+| 4 | Audio 10-120 seconds | Abort |
+| 4.5 | Subtitle coverage >= 95% | Abort |
+| 5 | ASS file created | Abort |
+| 7 | Video streams valid | Abort |
+
+### Subtitle Validation
+
+The system prevents subtitle truncation by validating word coverage:
+
+```
+Script words: 107
+Subtitle words: 105
+Coverage: 98.1% >= 95%  ✓ GATE PASSED
+```
+
+If subtitles are truncated, the generation stops with a clear error message.
+
+---
+
+## Keyword Color Highlighting
+
+Important words are automatically highlighted in **orange** for emphasis:
+
+| Category | Examples |
+|----------|----------|
+| Negation | not, never, no, don't, won't, can't |
+| Contrast | but, however, actually, wrong, false, true |
+| Superlatives | most, least, best, worst, only, first, last |
+| Numbers | million, billion, thousand, hundred |
+| Time | years, centuries, forever, still |
+
+The highlighting uses ASS override tags for smooth color transitions.
 
 ---
 
@@ -120,6 +184,9 @@ python -m pipeline.generate_short list-arcs
 | `pixar_3d` | Pixar-style 3D cartoon |
 | `watercolor` | Soft dreamy watercolor |
 | `cinematic` | Hollywood movie quality |
+| `vintage_sepia` | Aged sepia-toned photography (historical) |
+| `sci_fi_cinematic` | Interstellar/Star Trek aesthetic (space themes) |
+| `watercolor_fantasy` | Dreamy watercolor for mythology (Greek myths) |
 
 ```powershell
 # List available styles
@@ -140,6 +207,11 @@ Pre-defined character descriptions for consistent visuals across scenes:
 | `napoleon` | Bicorne hat, French military uniform, commanding presence |
 | `einstein` | Wild white hair, friendly expression, casual sweater |
 | `cleopatra` | Egyptian royal garments, elaborate gold jewelry |
+| `edison` | Middle-aged inventor, three-piece suit, laboratory setting |
+| `odysseus` | Greek warrior-king, dark curly hair, weathered by sea voyages |
+| `calypso` | Immortal nymph goddess, flowing hair with sea flowers |
+| `zeus` | King of gods, silver beard, thunderbolt, throne among clouds |
+| `sphinx` | Great Sphinx of Giza, lion body with human head, weathered limestone |
 
 Characters are auto-detected from topics. For "Da Vinci Mona Lisa", the system automatically uses the `da_vinci` character description for all 6 images.
 
@@ -152,6 +224,7 @@ Characters are auto-detected from topics. For "Da Vinci Mona Lisa", the system a
 | Command | Description |
 |---------|-------------|
 | `generate` | Generate complete short video from topic |
+| `preflight` | Run pre-flight checks (verify dependencies) |
 | `preview` | Preview generated images in a folder |
 | `regenerate` | Regenerate a single image |
 | `render` | Re-render video from existing images |

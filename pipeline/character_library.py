@@ -346,6 +346,64 @@ CHARACTER_LIBRARY = {
         era="20th century, various periods",
         typical_setting="Paris studio, Côte d'Azur",
     ),
+    
+    # Greek Mythology Heroes
+    "odysseus": CharacterProfile(
+        name="Odysseus",
+        aliases=["odysseus", "ulysses"],
+        appearance="rugged Greek warrior-king in his 30s-40s, weathered by years at sea",
+        hair="dark curly hair, often wind-blown, short beard",
+        facial_features="intelligent cunning eyes, strong jaw, noble yet war-weary face",
+        clothing="Greek chiton, sometimes bronze armor, traveler's cloak",
+        accessories="sword, bow (famous for archery), rope",
+        expression="cunning, thoughtful, longing",
+        pose="standing on ship, looking at horizon, or sitting in melancholy",
+        era="Mycenaean Greece, Bronze Age, ~1200 BCE",
+        typical_setting="ancient Greek ship, stormy seas, foreign shores, Ithaca",
+    ),
+    
+    "calypso": CharacterProfile(
+        name="Calypso",
+        aliases=["calypso", "kalypso"],
+        appearance="immortal nymph goddess, ethereally beautiful, ageless",
+        hair="long flowing hair, decorated with sea flowers and shells",
+        facial_features="otherworldly beauty, enchanting eyes, serene yet possessive expression",
+        clothing="flowing Greek peplos, sheer fabrics, adorned with pearls",
+        accessories="flowers, shells, golden comb",
+        expression="alluring, possessive, melancholic",
+        pose="reclining in cave, standing by sea, beckoning",
+        era="Timeless Greek mythology",
+        typical_setting="Ogygia island paradise, lush cave dwelling, tropical shores",
+    ),
+    
+    "zeus": CharacterProfile(
+        name="Zeus",
+        aliases=["zeus", "jupiter"],
+        appearance="powerful mature god, commanding presence, muscular divine physique",
+        hair="thick wavy hair and full beard, silver-white or dark depending on depiction",
+        facial_features="stern authoritative gaze, noble brow, godly features",
+        clothing="flowing white robes, bare chest, royal purple cloak",
+        accessories="thunderbolt, eagle, scepter, aegis shield",
+        expression="commanding, judging, regal",
+        pose="seated on throne, raising thunderbolt, standing among clouds",
+        era="Timeless Greek mythology, ruler of Olympus",
+        typical_setting="Mount Olympus, throne room among clouds, sky with lightning",
+    ),
+    
+    # Monuments & Landmarks (non-human characters)
+    "sphinx": CharacterProfile(
+        name="Great Sphinx of Giza",
+        aliases=["sphinx", "great sphinx", "giza sphinx", "egyptian sphinx"],
+        appearance="colossal limestone statue, lion body with human head, weathered ancient surface",
+        hair="nemes headdress (royal striped headcloth)",
+        facial_features="serene expression, missing nose, weathered features, enigmatic gaze",
+        clothing="bare stone with traces of original red and blue paint",
+        accessories="uraeus (cobra) on forehead (now missing), false beard (fragments in museum)",
+        expression="enigmatic, watchful, timeless",
+        pose="recumbent lion pose, paws extended forward, facing east toward rising sun",
+        era="Old Kingdom Egypt, c. 2500 BC, reign of Pharaoh Khafre",
+        typical_setting="Giza Plateau, with Great Pyramids in background, desert landscape",
+    ),
 }
 
 
