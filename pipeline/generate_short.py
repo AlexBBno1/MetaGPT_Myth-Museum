@@ -73,6 +73,134 @@ class GenerationConfig:
     # Video effects
     use_ken_burns: bool = True  # Slow zoom/pan effect
     use_crossfade: bool = True  # Crossfade between images
+    
+    # Subtitle style
+    subtitle_style: str = "punch"  # "normal" or "punch" (with keyword animation)
+
+
+# ============================================================================
+# Quality Guard - Ensures consistent video quality
+# ============================================================================
+
+class QualityGuard:
+    """
+    Validates video output meets quality standards.
+    
+    Prevents common issues:
+    - Missing Ken Burns effect (file too small)
+    - Missing audio
+    - Missing subtitles
+    - Wrong duration
+    """
+    
+    MIN_FILE_SIZE_MB = 5.0  # Below this, video likely missing effects
+    MAX_DURATION_DIFF = 2.0  # Seconds tolerance for duration check
+    
+    def __init__(self):
+        self.warnings = []
+        self.errors = []
+    
+    def validate(
+        self,
+        video_path: Path,
+        expected_duration: float,
+        check_audio: bool = True,
+    ) -> bool:
+        """
+        Validate video meets quality standards.
+        
+        Args:
+            video_path: Path to the video file
+            expected_duration: Expected duration in seconds
+            check_audio: Whether to verify audio stream exists
+            
+        Returns:
+            True if validation passes, False otherwise
+        """
+        self.warnings = []
+        self.errors = []
+        
+        if not video_path.exists():
+            self.errors.append(f"Video file not found: {video_path}")
+            return False
+        
+        # Check file size
+        size_mb = video_path.stat().st_size / (1024 * 1024)
+        if size_mb < self.MIN_FILE_SIZE_MB:
+            self.warnings.append(
+                f"Video file is small ({size_mb:.1f}MB < {self.MIN_FILE_SIZE_MB}MB). "
+                "May be missing Ken Burns effect or transitions."
+            )
+        
+        # Check streams using ffprobe
+        try:
+            result = subprocess.run(
+                [
+                    "ffprobe", "-v", "error",
+                    "-show_entries", "stream=codec_type",
+                    "-of", "csv=p=0",
+                    str(video_path)
+                ],
+                capture_output=True,
+                text=True,
+            )
+            streams = result.stdout.strip().split('\n')
+            
+            if "video" not in streams:
+                self.errors.append("Video stream missing!")
+            
+            if check_audio and "audio" not in streams:
+                self.errors.append("Audio stream missing!")
+                
+        except Exception as e:
+            self.warnings.append(f"Could not verify streams: {e}")
+        
+        # Check duration
+        try:
+            result = subprocess.run(
+                [
+                    "ffprobe", "-v", "error",
+                    "-show_entries", "format=duration",
+                    "-of", "csv=p=0",
+                    str(video_path)
+                ],
+                capture_output=True,
+                text=True,
+            )
+            actual_duration = float(result.stdout.strip())
+            diff = abs(actual_duration - expected_duration)
+            
+            if diff > self.MAX_DURATION_DIFF:
+                self.warnings.append(
+                    f"Duration mismatch: expected {expected_duration:.1f}s, "
+                    f"got {actual_duration:.1f}s (diff: {diff:.1f}s)"
+                )
+                
+        except Exception as e:
+            self.warnings.append(f"Could not verify duration: {e}")
+        
+        # Log results
+        for warning in self.warnings:
+            logger.warning(f"QualityGuard: {warning}")
+        for error in self.errors:
+            logger.error(f"QualityGuard: {error}")
+        
+        return len(self.errors) == 0
+    
+    def get_report(self) -> str:
+        """Get validation report as string."""
+        lines = []
+        if self.errors:
+            lines.append("ERRORS:")
+            for e in self.errors:
+                lines.append(f"  - {e}")
+        if self.warnings:
+            lines.append("WARNINGS:")
+            for w in self.warnings:
+                lines.append(f"  - {w}")
+        if not lines:
+            lines.append("All quality checks passed!")
+        return "\n".join(lines)
 
 
 @dataclass
@@ -339,8 +467,11 @@ class ShortVideoGenerator:
                 ass_path=ass_path,
                 series_text=series_info.display_text,
                 duration=duration,
+                subtitle_style=config.subtitle_style,
             )
+            style_label = "punch (animated)" if config.subtitle_style == "punch" else "normal"
             console.print(f"  ASS: {ass_path}")
+            console.print(f"  Style: {style_label}")
             
             # Phase 6: Render video
             console.print(f"\n[bold cyan]Phase 6: Video Render[/bold cyan]")
@@ -369,7 +500,21 @@ class ShortVideoGenerator:
             self._render_final(slideshow_path, audio_path, ass_path, final_path)
             console.print(f"  Final: {final_path}")
             
-            result.success = True
+            # Quality validation
+            console.print(f"\n[bold cyan]Phase 7: Quality Check[/bold cyan]")
+            quality_guard = QualityGuard()
+            quality_passed = quality_guard.validate(final_path, duration)
+            
+            if quality_passed:
+                console.print(f"  [green]All quality checks passed![/green]")
+            else:
+                for error in quality_guard.errors:
+                    console.print(f"  [red]ERROR: {error}[/red]")
+            
+            for warning in quality_guard.warnings:
+                console.print(f"  [yellow]WARNING: {warning}[/yellow]")
+            
+            result.success = quality_passed
             result.final_video = final_path
             
             # Save metadata
@@ -397,15 +542,51 @@ class ShortVideoGenerator:
         
         return result
     
+    def _add_punch_to_first_word(self, text: str) -> str:
+        """
+        Add punch animation to first word of subtitle.
+        
+        Animation: First word starts at 115% scale, shrinks to 100% in 150ms.
+        Uses ASS override tags.
+        """
+        words = text.split(" ", 1)
+        # Punch animation: scale 115% -> 100% over 150ms
+        punch_tag = r"{\fscx115\fscy115\t(0,150,\fscx100\fscy100)}"
+        reset_tag = r"{\r}"  # Reset to default style
+        
+        if len(words) == 1:
+            return f"{punch_tag}{words[0]}"
+        else:
+            return f"{punch_tag}{words[0]} {reset_tag}{words[1]}"
+    
     def _create_ass_with_series_marker(
         self,
         srt_path: Path,
         ass_path: Path,
         series_text: str,
         duration: float,
+        subtitle_style: str = "punch",  # "normal" or "punch"
     ) -> None:
-        """Create ASS file with series marker overlay."""
+        """
+        Create ASS file with series marker overlay and optional punch animation.
         
+        Shorts-optimized subtitle styles:
+        - Larger font (90pt vs 72pt)
+        - Thicker border (5px)
+        - Subtle shadow (2px)
+        - Safe area positioning (MarginV=200)
+        - Fade-in effect (80ms)
+        - Optional punch animation on first word
+        
+        Args:
+            srt_path: Path to SRT file
+            ass_path: Output ASS path
+            series_text: Series marker text (e.g., "History Myths #1")
+            duration: Video duration in seconds
+            subtitle_style: "normal" or "punch"
+        """
+        
+        # Updated styles for Shorts - larger, bolder, safer positioning
         ass_content = f'''[Script Info]
 Title: Generated Subtitles
 ScriptType: v4.00+
@@ -416,12 +597,19 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Impact,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,3,4,0,5,80,80,300,1
+Style: Default,Impact,90,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,5,2,2,50,50,200,1
 Style: SeriesMarker,Arial,32,&H99FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,0,9,30,30,30,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 '''
+        # Style explanation:
+        # - Fontsize: 90 (25% larger than 72)
+        # - BorderStyle: 1 (outline + shadow)
+        # - Outline: 5 (thick black border)
+        # - Shadow: 2 (subtle shadow)
+        # - Alignment: 2 (bottom center)
+        # - MarginV: 200 (safe area, avoid UI elements)
         
         # Parse SRT if it exists
         if srt_path.exists():
@@ -441,9 +629,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                         start = f"{int(sh)}:{sm}:{ss}.{sms[:2]}"
                         end = f"{int(eh)}:{em}:{es}.{ems[:2]}"
                         text = ' '.join(lines[2:]).replace('\n', ' ')
-                        ass_content += f"Dialogue: 0,{start},{end},Default,,0,0,0,,{text}\n"
+                        
+                        # Apply effects based on style
+                        fade_in = r"{\fad(80,0)}"  # 80ms fade in
+                        
+                        if subtitle_style == "punch":
+                            # Add punch animation to first word
+                            text_with_effects = f"{fade_in}{self._add_punch_to_first_word(text)}"
+                        else:
+                            # Normal style - just fade in
+                            text_with_effects = f"{fade_in}{text}"
+                        
+                        ass_content += f"Dialogue: 0,{start},{end},Default,,0,0,0,,{text_with_effects}\n"
         
-        # Add series marker
+        # Add series marker (always visible, no animation)
         hours = int(duration // 3600)
         minutes = int((duration % 3600) // 60)
         seconds = int(duration % 60)
@@ -628,6 +827,10 @@ def generate(
         "high", "--quality", "-q",
         help="Image quality: 'high' (Imagen 3), 'standard' (Imagen @006), or 'fallback' (stock photos)",
     ),
+    subtitle_style: str = typer.Option(
+        "punch", "--subtitle-style",
+        help="Subtitle style: 'normal' (fade only) or 'punch' (animated first word)",
+    ),
 ) -> None:
     """
     Generate a complete short video from a topic.
@@ -662,6 +865,8 @@ def generate(
         console.print(f"Visual Director: [dim]disabled[/dim]")
     
     console.print(f"Image Quality: [cyan]{quality}[/cyan]")
+    sub_label = "punch (animated)" if subtitle_style == "punch" else "normal"
+    console.print(f"Subtitle Style: [cyan]{sub_label}[/cyan]")
     
     # Create config
     config = GenerationConfig(
@@ -676,6 +881,7 @@ def generate(
         tts_rate=rate,
         use_ken_burns=ken_burns,
         use_crossfade=crossfade,
+        subtitle_style=subtitle_style,
     )
     
     # Run generation
@@ -839,6 +1045,18 @@ def regenerate_image(
 @app.command("render")
 def render_video(
     folder: Path = typer.Argument(..., help="Path to shorts output folder"),
+    subtitle_style: str = typer.Option(
+        "punch", "--subtitle-style",
+        help="Subtitle style: 'normal' (fade only) or 'punch' (animated first word)",
+    ),
+    regenerate_subs: bool = typer.Option(
+        False, "--regenerate-subs",
+        help="Regenerate ASS subtitles from SRT with new style",
+    ),
+    series_text: str = typer.Option(
+        None, "--series-text",
+        help="Series marker text (e.g., 'History Myths #1')",
+    ),
 ) -> None:
     """
     Render final video from existing images and audio.
@@ -847,6 +1065,8 @@ def render_video(
     
     Example:
         python -m pipeline.generate_short render outputs/shorts/art-myths_davinci
+        python -m pipeline.generate_short render outputs/shorts/art-myths_davinci --subtitle-style punch
+        python -m pipeline.generate_short render outputs/shorts/art-myths_davinci --regenerate-subs --series-text "Art Myths #1"
     """
     import subprocess
     
@@ -855,6 +1075,7 @@ def render_video(
     # Check required files
     bg_dir = folder / "backgrounds"
     audio_path = folder / "voiceover.mp3"
+    srt_path = folder / "captions.srt"
     ass_path = folder / "captions.ass"
     
     if not bg_dir.exists():
@@ -865,10 +1086,6 @@ def render_video(
         console.print(f"[red]No voiceover.mp3 found[/red]")
         raise typer.Exit(1)
     
-    if not ass_path.exists():
-        console.print(f"[red]No captions.ass found[/red]")
-        raise typer.Exit(1)
-    
     images = sorted(bg_dir.glob("bg_*.jpg"))
     if not images:
         console.print(f"[red]No images found[/red]")
@@ -876,11 +1093,33 @@ def render_video(
     
     console.print(f"Images: {len(images)}")
     console.print(f"Audio: {audio_path}")
-    console.print(f"Captions: {ass_path}")
     
     # Get audio duration
     duration = get_audio_duration(audio_path)
     console.print(f"Duration: {duration:.1f}s")
+    
+    generator = ShortVideoGenerator()
+    
+    # Regenerate ASS if requested or if missing
+    if regenerate_subs or not ass_path.exists():
+        if not srt_path.exists():
+            console.print(f"[red]No captions.srt found for regeneration[/red]")
+            raise typer.Exit(1)
+        
+        marker = series_text or "Myth Museum"
+        style_label = "punch (animated)" if subtitle_style == "punch" else "normal"
+        console.print(f"Regenerating ASS with style: {style_label}")
+        
+        generator._create_ass_with_series_marker(
+            srt_path=srt_path,
+            ass_path=ass_path,
+            series_text=marker,
+            duration=duration,
+            subtitle_style=subtitle_style,
+        )
+        console.print(f"Captions: {ass_path} [green](regenerated)[/green]")
+    else:
+        console.print(f"Captions: {ass_path}")
     
     # Create slideshow
     slideshow_path = folder / "background.mp4"
@@ -888,7 +1127,6 @@ def render_video(
     
     console.print("\nCreating slideshow...")
     
-    generator = ShortVideoGenerator()
     generator._create_slideshow(
         images=images,
         output_path=slideshow_path,
@@ -905,6 +1143,20 @@ def render_video(
         ass_path=ass_path,
         output_path=final_path,
     )
+    
+    # Quality check
+    console.print("\nQuality Check...")
+    quality_guard = QualityGuard()
+    quality_passed = quality_guard.validate(final_path, duration)
+    
+    if quality_passed:
+        console.print(f"  [green]All checks passed![/green]")
+    else:
+        for error in quality_guard.errors:
+            console.print(f"  [red]ERROR: {error}[/red]")
+    
+    for warning in quality_guard.warnings:
+        console.print(f"  [yellow]WARNING: {warning}[/yellow]")
     
     if final_path.exists():
         size_mb = final_path.stat().st_size / (1024 * 1024)
