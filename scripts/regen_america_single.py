@@ -72,8 +72,8 @@ Sometimes the myth tells you more about what people wanted to believe than what 
             },
             {
                 "segment": "bg_6",
-                "prompt": "Oil painting split composition, left side innocent young boy, right side cunning military general Washington, same face at different ages, truth vs myth visual metaphor, dramatic lighting, museum quality, 9:16 vertical, no text",
-                "fallback_keyword": "george washington portrait two faces",
+                "prompt": "Oil painting still life, open antique leather book on wooden desk showing handwritten story page, large red wax seal stamped across the text, quill pen beside book, warm candlelight, 18th century study aesthetic, symbolic revelation moment, museum quality, 9:16 vertical, no text",
+                "fallback_keyword": "antique book desk candlelight painting",
             },
         ],
     },
