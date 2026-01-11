@@ -93,6 +93,18 @@ SERIES_CATEGORIES = [
     ("babylon", "Lost Civs"),
     ("mesopotamia", "Lost Civs"),
     
+    # Space/Astronomy (high priority)
+    ("galaxy", "Space Myths"),
+    ("milky way", "Space Myths"),
+    ("cosmos", "Space Myths"),
+    ("universe", "Space Myths"),
+    ("astronomy", "Space Myths"),
+    ("black hole", "Space Myths"),
+    ("star", "Space Myths"),
+    ("planet", "Space Myths"),
+    ("solar system", "Space Myths"),
+    ("space", "Space Myths"),
+    
     # Greek/Roman mythology
     ("hades", "Greek Myths"),
     ("zeus", "Greek Myths"),
@@ -187,6 +199,13 @@ SERIES_VISUAL_STYLES = {
         "texture": "ancient ruins, carved stone, jungle vines, pyramids",
         "mood": "mysterious, ancient, lost, rediscovered",
         "era": "pre-Columbian, ancient civilizations",
+    },
+    "Space Myths": {
+        "palette": "cosmic deep blue, nebula purple, star white, aurora green, black void",
+        "lighting": "starlight, nebula glow, cosmic rays, sun flares, bioluminescent",
+        "texture": "galaxies, planets, asteroids, spacecraft, star fields, nebulae",
+        "mood": "awe-inspiring, vast, mysterious, scientific wonder",
+        "era": "cosmic timescale, modern astronomy",
     },
     "Empire Files": {
         "palette": "royal purple, gold, rich reds, marble white",
