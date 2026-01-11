@@ -449,6 +449,24 @@ STYLE_TEMPLATES = {
         lighting="flat stylized lighting, no shadows, traditional Japanese aesthetic",
         texture="wood grain print texture, visible print lines, traditional Japanese paper washi texture, wave patterns",
     ),
+    "colonial_portrait": StyleTemplate(
+        style_id="colonial_portrait",
+        name="Colonial American Portrait",
+        description="18th century American portrait painting style, Gilbert Stuart influence",
+        style_prefix="Colonial American oil painting style, 18th century portrait aesthetic, Gilbert Stuart inspired",
+        color_palette="muted earth tones, burgundy, navy blue, gold highlights, aged varnish yellows",
+        lighting="soft diffused studio light, candlelit warmth, dramatic chiaroscuro shadows",
+        texture="oil canvas texture, visible brushstrokes, craquelure aging, museum quality",
+    ),
+    "americana": StyleTemplate(
+        style_id="americana",
+        name="Americana Illustration",
+        description="Norman Rockwell inspired warm American illustration style",
+        style_prefix="Norman Rockwell style Americana illustration, warm nostalgic 1950s Saturday Evening Post aesthetic",
+        color_palette="warm autumn colors, golden wheat, red barn, blue sky, apple pie warmth",
+        lighting="warm afternoon sunlight, cozy indoor glow, golden hour",
+        texture="painted illustration, soft edges, vintage magazine quality, warm oil paint",
+    ),
 }
 
 

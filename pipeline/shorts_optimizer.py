@@ -118,6 +118,18 @@ SERIES_CATEGORIES = [
     ("tokyo", "Japan Myths"),
     ("kyoto", "Japan Myths"),
     
+    # America (high priority)
+    ("washington", "America Myths"),
+    ("cherry tree", "America Myths"),
+    ("wild west", "America Myths"),
+    ("cowboy", "America Myths"),
+    ("thanksgiving", "America Myths"),
+    ("pilgrim", "America Myths"),
+    ("frontier", "America Myths"),
+    ("colonial", "America Myths"),
+    ("founding father", "America Myths"),
+    ("american history", "America Myths"),
+    
     # Greek/Roman mythology
     ("hades", "Greek Myths"),
     ("zeus", "Greek Myths"),
@@ -226,6 +238,13 @@ SERIES_VISUAL_STYLES = {
         "texture": "ukiyo-e woodblock print, wave patterns, cherry blossoms, bamboo, castle tiles",
         "mood": "elegant, mysterious, traditional, dramatic",
         "era": "Edo period Japan, feudal Japan, traditional Japanese",
+    },
+    "America Myths": {
+        "palette": "navy blue, white, burgundy red, gold, sepia brown",
+        "lighting": "warm natural light, golden hour, nostalgic glow",
+        "texture": "aged paper, oil canvas, vintage photograph grain, parchment",
+        "mood": "patriotic, nostalgic, historical, revealing",
+        "era": "Colonial America to 19th century",
     },
     "Empire Files": {
         "palette": "royal purple, gold, rich reds, marble white",
