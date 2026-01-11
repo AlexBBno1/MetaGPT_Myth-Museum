@@ -440,6 +440,15 @@ STYLE_TEMPLATES = {
         lighting="soft diffused light, glowing edges, luminous highlights, ethereal radiance",
         texture="visible brush strokes, wet-on-wet blending, paper grain texture, organic color bleeding",
     ),
+    "ukiyo_e": StyleTemplate(
+        style_id="ukiyo_e",
+        name="Ukiyo-e Japanese Woodblock",
+        description="Traditional Japanese woodblock print style, bold outlines, flat colors",
+        style_prefix="Traditional Japanese ukiyo-e woodblock print style, bold black outlines, flat colors, Hokusai and Hiroshige inspired",
+        color_palette="indigo blue, vermillion red, gold ochre, cream white, black ink outlines",
+        lighting="flat stylized lighting, no shadows, traditional Japanese aesthetic",
+        texture="wood grain print texture, visible print lines, traditional Japanese paper washi texture, wave patterns",
+    ),
 }
 
 

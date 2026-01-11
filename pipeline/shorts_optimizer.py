@@ -105,6 +105,19 @@ SERIES_CATEGORIES = [
     ("solar system", "Space Myths"),
     ("space", "Space Myths"),
     
+    # Japan (high priority)
+    ("ninja", "Japan Myths"),
+    ("samurai", "Japan Myths"),
+    ("bushido", "Japan Myths"),
+    ("kabuki", "Japan Myths"),
+    ("shogun", "Japan Myths"),
+    ("geisha", "Japan Myths"),
+    ("japan", "Japan Myths"),
+    ("japanese", "Japan Myths"),
+    ("edo", "Japan Myths"),
+    ("tokyo", "Japan Myths"),
+    ("kyoto", "Japan Myths"),
+    
     # Greek/Roman mythology
     ("hades", "Greek Myths"),
     ("zeus", "Greek Myths"),
@@ -206,6 +219,13 @@ SERIES_VISUAL_STYLES = {
         "texture": "galaxies, planets, asteroids, spacecraft, star fields, nebulae",
         "mood": "awe-inspiring, vast, mysterious, scientific wonder",
         "era": "cosmic timescale, modern astronomy",
+    },
+    "Japan Myths": {
+        "palette": "indigo blue, vermillion red, gold ochre, cream white, black ink",
+        "lighting": "flat stylized lighting, lantern glow, moonlight, paper screen diffusion",
+        "texture": "ukiyo-e woodblock print, wave patterns, cherry blossoms, bamboo, castle tiles",
+        "mood": "elegant, mysterious, traditional, dramatic",
+        "era": "Edo period Japan, feudal Japan, traditional Japanese",
     },
     "Empire Files": {
         "palette": "royal purple, gold, rich reds, marble white",
