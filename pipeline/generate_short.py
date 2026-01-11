@@ -754,7 +754,7 @@ class ShortVideoGenerator:
                     console.print(f"       [red]FAILED[/red]: {img_result.error[:50] if img_result.error else 'Unknown'}")
             
             # Phase 3 Gate: Minimum images required
-            MIN_IMAGES_REQUIRED = 4
+            MIN_IMAGES_REQUIRED = 6  # Consistent with shorts_optimizer.MIN_IMAGES
             if images_generated < MIN_IMAGES_REQUIRED:
                 result.error = f"Only {images_generated} images generated, need at least {MIN_IMAGES_REQUIRED}"
                 console.print(f"  [red]GATE FAILED: {result.error}[/red]")
